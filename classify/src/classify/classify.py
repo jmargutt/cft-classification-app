@@ -10,17 +10,18 @@ from azure.storage.blob import BlobServiceClient
 import click
 from setfit import SetFitModel, SetFitTrainer, sample_dataset
 import logging
-logging.root.handlers = []
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG, filename='ex.log')
-# set up logging to console
-console = logging.StreamHandler()
-console.setLevel(logging.WARNING)
-# set a format which is simpler for console use
-formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
-console.setFormatter(formatter)
-logging.getLogger("").addHandler(console)
-twilio_logger = logging.getLogger('twilio.http_client')
-twilio_logger.setLevel(logging.WARNING)
+import sys
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s : %(levelname)s : %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("azure").setLevel(logging.WARNING)
+logging.getLogger("requests_oauthlib").setLevel(logging.WARNING)
 # load_dotenv(dotenv_path="../credentials/.env")
 load_dotenv(dotenv_path=r"C:\Users\JMargutti\OneDrive - Rode Kruis\Rode Kruis\digital-cea\few-shot-classification-app\credentials\.env")
 
