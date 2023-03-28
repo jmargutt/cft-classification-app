@@ -87,7 +87,7 @@ def get_feedback_data(user_email, ds_id, keep_id=False):
 def update_feedback_entry(feedback_id, user_email, replace_body):
     try:
         cosmos_container = cosmos_db.get_container_client('Feedback')
-        user_email = user_email + "                                           "
+        user_email = user_email.replace(' ', '') + "                                           "
         read_item = cosmos_container.read_item(item=feedback_id, partition_key=user_email)
         for key in replace_body.keys():
             read_item[key] = replace_body[key]
