@@ -22,10 +22,10 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("azure").setLevel(logging.WARNING)
 logging.getLogger("requests_oauthlib").setLevel(logging.WARNING)
-# load_dotenv(dotenv_path="../credentials/.env")
-load_dotenv(dotenv_path=r"C:\Users\JMargutti\OneDrive - Rode Kruis\Rode Kruis\digital-cea\few-shot-classification-app\credentials\.env")
+load_dotenv(dotenv_path="../credentials/.env")
 
 MODELS = ['COVID-19 (English)']
+
 
 def get_cosmos_db():
     settings = {
@@ -40,6 +40,7 @@ def get_cosmos_db():
                                         user_agent_overwrite=True)
     return client.get_database_client(settings['database_id'])
 
+
 cosmos_db = get_cosmos_db()
 
 
@@ -49,9 +50,28 @@ def get_local_data_path(user_email, ds_id):
     return f"{data_dir}/user_{user_email}_ds_{ds_id}_data.csv"
 
 
+def query_items_by_partition_key(container, key):
+    # Including the partition key value of account_number in the WHERE filter results in a more efficient query
+    items = list(container.query_items(
+        query="SELECT * FROM r WHERE r.partitionKey=@key",
+        parameters=[
+            {"name": "@key", "value": key}
+        ]
+    ))
+    return items
+
+
+def filter_by_dataset(item_list, ds_id):
+    for item in item_list[:]:
+        if 'ds_id' in item.keys():
+            if str(item['ds_id']) != str(ds_id):
+                item_list.remove(item)
+    return item_list
+
+
 def get_feedback_data(user_email, ds_id, keep_id=False):
     cosmos_container = cosmos_db.get_container_client('Feedback')
-    user_email = user_email + "                                           "
+    user_email = user_email.replace(' ', '') + "                                           "
     item_list = query_items_by_partition_key(cosmos_container, user_email)
     item_list = filter_by_dataset(item_list, ds_id)
     df = pd.DataFrame(item_list)
@@ -75,25 +95,6 @@ def update_feedback_entry(feedback_id, user_email, replace_body):
         return "success"
     except exceptions.CosmosResourceNotFoundError:
         return "not_found"
-
-
-def query_items_by_partition_key(container, key):
-    # Including the partition key value of account_number in the WHERE filter results in a more efficient query
-    items = list(container.query_items(
-        query="SELECT * FROM r WHERE r.partitionKey=@key",
-        parameters=[
-            {"name": "@key", "value": key}
-        ]
-    ))
-    return items
-
-
-def filter_by_dataset(item_list, ds_id):
-    for item in item_list[:]:
-        if 'ds_id' in item.keys():
-            if str(item['ds_id']) != str(ds_id):
-                item_list.remove(item)
-    return item_list
 
 
 def pandas_to_html(df, replace_values={}, replace_columns={}, titlecase=False):
